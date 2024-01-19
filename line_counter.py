@@ -37,12 +37,6 @@ def annotator(detections, labels, frame, line_counter):
         frame=frame,
         line_counter=line_counter
         )
-    
-    # trigger the line counter, it will return a tuple of two boolean arrays
-    # the first array will be True for each detection that crossed the line from the outside to the inside
-    line_counter.trigger(
-        detections=detections
-        )
 
     # annotate the frame, it will draw a box for each detection
     frame = box_annotator.annotate(
@@ -75,6 +69,9 @@ def main(weights, source, device, save):
     x1, y1, x2, y2 = Points("points/lines.csv", "points/polygon.json").get_lines()
     line_counter = sv.LineZone(start=Point(x1, y1), end=Point(x2, y2))
 
+    zone = sv.PolygonZone(polygon=Points("points/lines.csv", "points/polygon.json").get_polygon(), frame_resolution_wh=(1920, 1080))
+    zone_annotator = sv.PolygonZoneAnnotator(zone=zone, color=sv.Color.white(), thickness=3, text_thickness=3, text_scale=2)
+
     # create a video capture object
     videocapture = cv2.VideoCapture(source)
     fps, fourcc = int(videocapture.get(5)), cv2.VideoWriter_fourcc(*'XVID')
@@ -100,6 +97,17 @@ def main(weights, source, device, save):
         labels = [f"#{tracker_id} {model.names[class_id]} {confidence:0.2f}" for _, _, confidence, class_id, tracker_id in detections]
 
         # annotate the frame
+        # trigger the line counter, it will return a tuple of two boolean arrays
+        # the first array will be True for each detection that crossed the line from the outside to the inside
+        line_counter.trigger(
+            detections=detections
+            )
+        zone.trigger(
+            detections=detections
+            )
+        # print(zone.current_count,zone.polygon)
+        frame = zone_annotator.annotate(scene=frame)
+
         frame = annotator(detections, labels, frame, line_counter)
 
         if save:

@@ -1,6 +1,6 @@
 import csv
 import json
-
+import numpy as np
 class Points:
 
     def __init__(self, line_path, polygon_path):
@@ -16,8 +16,8 @@ class Points:
         """
         with open(self.line_path, 'r') as f:
             data = csv.reader(f)
-            xyxy = map(int, list(data)[0][1:5])
-            return list(xyxy)
+            xyxy = list(map(int, list(data)[0][1:5]))
+            return np.array(xyxy)
 
     def get_polygon(self):
         """
@@ -54,7 +54,7 @@ class Points:
 
             points = data['annotations'][0]['segmentation'][0]
             points = list(map(int, points))
-            return points
+            return np.array(points).reshape(-1, 2)
         
 
 if __name__ == "__main__":

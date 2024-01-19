@@ -1,1 +1,1 @@
-python line_counter.py --weights yolov8s.pt --source data/videos/test1.mp4 --save
+python line_counter.py --weights models/yolov8x.pt --source data/videos/video.mp4 #--save
