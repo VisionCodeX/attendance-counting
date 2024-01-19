@@ -57,7 +57,7 @@ def annotator(detections, labels, frame, line_counter):
 
     return frame
 
-def main(weights, source, device):
+def main(weights, source, device, save):
     """
     Main function to run the program
     """
@@ -73,12 +73,15 @@ def main(weights, source, device):
 
     # create LineZone object, it will count the number of detections that cross the line
     x1, y1, x2, y2 = Points("points/lines.csv", "points/polygon.json").get_lines()
-    print(x1, y1, x2, y2)
     line_counter = sv.LineZone(start=Point(x1, y1), end=Point(x2, y2))
 
     # create a video capture object
     videocapture = cv2.VideoCapture(source)
     fps, fourcc = int(videocapture.get(5)), cv2.VideoWriter_fourcc(*'XVID')
+
+    
+    frame_width, frame_height = int(videocapture.get(3)), int(videocapture.get(4))
+    video_writer = cv2.VideoWriter('output.mp4', fourcc, fps, (frame_width, frame_height))
 
     while videocapture.isOpened():
 
@@ -99,20 +102,27 @@ def main(weights, source, device):
         # annotate the frame
         frame = annotator(detections, labels, frame, line_counter)
 
+        if save:
+            video_writer.write(frame)
+        # show the frame
         cv2.imshow('annotated_frame', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+    
+    if save:
+        video_writer.release()
     videocapture.release()
     cv2.destroyAllWindows()
-    
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--weights", type=str, default="yolov8s.pt", help="path to weights file")
     argparser.add_argument("--source", type=str, default="data/videos/video.mp4", help="path to source")
+    argparser.add_argument("--save", type=bool, action=argparse.BooleanOptionalAction, default=False, help="save the video")
     args = argparser.parse_args()
 
     weights=args.weights
     source=args.source
-    main(weights, source, device='cpu')
+    save=args.save
+
+    main(weights, source, device='cpu', save=save)
