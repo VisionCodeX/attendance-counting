@@ -79,7 +79,7 @@ def main(weights, source, device, save, output):
             check_user_in_area["teacher_id"] = teacher_id
 
         cv2.putText(im0, f"Teacher     : {'Yes' if any(is_teacher['is_teacher']) or check_user_in_area['teacher_id'] in track_ids  else 'Not'}", (1600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        cv2.putText(im0, f"TeacherId   : {int(check_user_in_area['teacher_id'])}", (1600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        cv2.putText(im0, f"TeacherId   : {check_user_in_area['teacher_id']}", (1600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         cv2.putText(im0, f"CurrentCount: {len(current_count)}", (1600, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         cv2.putText(im0, f"AlreadyInside: {len(already_inside)}", (1600, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
