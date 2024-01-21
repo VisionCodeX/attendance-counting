@@ -6,14 +6,15 @@ from shapely.geometry import Polygon
 from shapely.geometry.point import Point
 import numpy as np
 from datetime import datetime
+import argparse
 
-def main(weights, source, device, save):
+def main(weights, source, device, save, output):
     check_user_in_area = {"is_teacher":False, "teacher_id": None}
 
     model = YOLO(weights)
     model = model.to("cuda") if device == '0' else model.to("cpu")
     cap = cv2.VideoCapture(source)
-    
+
     assert cap.isOpened(), "Error reading video file"
     w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
 
@@ -25,7 +26,7 @@ def main(weights, source, device, save):
 
     # Video writer
     if save:
-        video_writer = cv2.VideoWriter("output_of_ultly.mp4",
+        video_writer = cv2.VideoWriter(output,
                             cv2.VideoWriter_fourcc(*'mp4v'),
                             fps,
                             (w, h))
@@ -50,7 +51,7 @@ def main(weights, source, device, save):
 
         cv2.polylines(im0, [teacher_are_cords], isClosed=True, color=(255, 42, 4), thickness=2)
         im0 = counter.start_counting(im0, tracks)
-        
+
         in_count = counter.in_counts
         out_count = counter.out_counts
 
@@ -70,10 +71,17 @@ def main(weights, source, device, save):
             is_teacher['is_teacher'].append(is_teacher_area)
             is_teacher['teacher_id'].append(track_id)
 
-            
-        cv2.putText(im0, f"Teacher     : {1 if any(is_teacher['is_teacher']) else 0}", (1600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        cv2.putText(im0, f"CurrentCount: {len(current_count)}", (1600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        cv2.putText(im0, f"AlreadyInside: {len(already_inside)}", (1600, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        teacher_index = is_teacher['is_teacher'].index(True) if any(is_teacher['is_teacher']) else None
+        teacher_id = is_teacher['teacher_id'][teacher_index] if teacher_index is not None else None
+
+        track_ids = [i.item() for i in track_ids]
+        if check_user_in_area["teacher_id"] not in track_ids and teacher_id is not None:
+            check_user_in_area["teacher_id"] = teacher_id
+
+        cv2.putText(im0, f"Teacher     : {'Yes' if any(is_teacher['is_teacher']) or check_user_in_area['teacher_id'] in track_ids  else 'Not'}", (1600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        cv2.putText(im0, f"TeacherId   : {int(check_user_in_area['teacher_id'])}", (1600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        cv2.putText(im0, f"CurrentCount: {len(current_count)}", (1600, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        cv2.putText(im0, f"AlreadyInside: {len(already_inside)}", (1600, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
         cv2.imshow("object_counting_output", im0)
         if save:
@@ -88,4 +96,19 @@ def main(weights, source, device, save):
 
 
 if __name__ == "__main__":
-    main(weights="models/yolov8x.pt", source="data/videos/video.mp4", device="0", save=False)
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("--weights", type=str, default="yolov8s.pt", help="path to weights file")
+    argparser.add_argument("--source", type=str, default="data/videos/video.mp4", help="path to source")
+    argparser.add_argument("--save", type=bool, action=argparse.BooleanOptionalAction, default=False, help="save the video")
+    argparser.add_argument("--device", type=str, default="0", help="device to use")
+    argparser.add_argument("--output", type=str, default="outputs/person_detection.mp4", help="path to output")
+
+    args = argparser.parse_args()
+
+    weights=args.weights
+    source=args.source
+    save=args.save
+    device=args.device
+    output=args.output
+
+    main(weights=weights, source=source, device=device, save=save, output=output)
