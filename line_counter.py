@@ -109,7 +109,7 @@ def main(weights, source, device, save):
         frame = zone_annotator.annotate(scene=frame)
 
         frame = annotator(detections, labels, frame, line_counter)
-
+        
         if save:
             video_writer.write(frame)
         # show the frame
@@ -133,4 +133,4 @@ if __name__ == "__main__":
     source=args.source
     save=args.save
 
-    main(weights, source, device='cpu', save=save)
+    main(weights, source, device='0', save=save)
